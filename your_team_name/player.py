@@ -130,5 +130,5 @@ def all_possible_actions(state, colour):
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid():
                         all_actions.append(move_action)
-        all_actions.append(Action("BOOM", 1, coord, coord)
+        all_actions.append(Action("BOOM", 1, coord, coord))
     return all_actions
