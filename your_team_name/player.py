@@ -30,10 +30,25 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
-        all_moves = all_moves(state)
-        for move in all_moves:
-            (best_value, best_action) = minimax(move)
-        return return_action(best_action)
+        all_actions = all_possible_actions(self.state, self.colour)
+        best_action = None
+        if self.colour == "white": #white maximizer
+            best_eval = -1000
+            for action in all_actions:
+                (eval_child, action_child) = minimax(action, state, 0, "black")
+                if eval_child > best_eval:
+                    best_eval = eval_child
+                    best_action = action_child
+            return best_action.return_action()
+        else:
+            best_eval = 1000
+            for action in all_actions:
+                (eval_child, action_child) = minimax(action, state, 0, "white")
+                if eval_child < best_eval:
+                    best_eval = eval_child
+                    best_action = action_child
+            return best_action.return_action()
+
 
 
     def update(self, colour, action):
@@ -58,27 +73,34 @@ class ExamplePlayer:
 
         return self.state
 
-def minimax(self, action, state, current_depth, is_white):
-    current_colour = "white" if is_white else "black"
-    if current_depth == MAX_DEPTH || winner(state) != "none":
-        return (evaluation(state), state)
-    state = action.apply_to(state)
-    #white: max
-    best_value = -100 if is_white else 100
+def minimax(action, state, current_depth, turn):
     best_action = None
-    for possible_action in all_possible_actions(state, current_colour):
-        (eval_child, action_child) = minimax(possible_action, state, current_depth+1, not is_white)
+    state = action.apply_to(state)
+    if turn == "white": #white maximizer
+        best_eval = -1000
+        if current_depth == MAX_DEPTH || winner(state) != "white":
+            return (evaluation(state), state)
 
-    if is_colour and best_value < eval_child:
-            best_value = eval_child
-            best_action = possible_action
+        for possible_action in all_possible_actions(state, turn):
+            (eval_child, action_child) = minimax(possible_action, state, current_depth+1, "black")
+            if eval_child > best_eval:
+                best_eval = eval_child
+                best_action = action_child
+        return (best_eval, best_action)
 
-        elif (not is_white) and best_value > eval_child:
-            best_value = eval_child
-            best_action = possible_action
-    return (best_value, best_action)
+    else: #black minimizer
+        best_eval = 1000
+        if current_depth == MAX_DEPTH || winner(state) != "black":
+            return (evaluation(state), state)
+        state = action.apply_to(state)
+        for possible_action in all_possible_actions(state, turn):
+            (eval_child, action_child) = minimax(possible_action, state, current_depth+1, "white")
+            if eval_child < best_eval:
+                best_eval = eval_child
+                best_action = action_child
+        return (best_eval, best_action)
 
-def winner(self, state):
+def winner(state):
     if len(state["black"]) == 0 and len(state["white"]) == 0:
         return "both"
     elif len(state["black"]) == 0:
@@ -89,13 +111,13 @@ def winner(self, state):
         return "none"
 
 def count_members(team):
-        count = 0
-        for member in team:
-            count += member[0]
-        return count
+    count = 0
+    for member in team:
+        count += member[0]
+    return count
 
 def evaluation(state):
-        return count_members(state["white"]) - count_members(state["black"])
+    return count_members(state["white"]) - count_members(state["black"])
 
 def all_possible_actions(state, colour):
     all_actions = []
@@ -109,3 +131,4 @@ def all_possible_actions(state, colour):
                     if move_action.is_valid():
                         all_actions.append(move_action)
         all_actions.append(Action("BOOM", 1, coord, coord)
+    return all_actions
