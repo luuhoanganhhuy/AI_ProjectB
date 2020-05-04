@@ -99,10 +99,13 @@ class Action:
             return False
         return True
 
-    def apply_move(self, state, a, b):
-        if self.is_valid(state):
-            pass
-
     @classmethod
     def move_from_attributes(cls, n, coord, step, direction):
         return cls("MOVE", n, coord, (coord[0]+step*direction[0], coord[1]+step*direction[1]), colour)
+
+    @classmethod
+    def action_from_tuple(cls, tup):
+        if len(tup) == 2:
+            return cls(tup[0], 1, tup[1], tup[1])
+        else if len(tup) == 4:
+            return cls(tup[0], tup[1], tup[2], tup[3]) 
