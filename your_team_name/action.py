@@ -1,3 +1,4 @@
+import copy
 class Action:
     def __init__(self, type, n, a, b, colour):
         self.type = type
@@ -79,33 +80,33 @@ class Action:
         if self.type == "BOOM":
             return boom(state, self.a, [], self.colour, self.enemy)
         elif self.type == "MOVE":
-            return move(state, self.n, self.a, self.b)
+            return move(state, self.n, self.a, self.b, self.colour)
         return state
 
     def return_action(self):
         if self.type == "BOOM":
             return (self.type, self.a)
-        else if self.type == "MOVE":
-            return (self.type, self.a, self.b)
+        elif self.type == "MOVE":
+            return (self.type, self.n, self.a, self.b)
         return None
 
-    def is_valid_move(self, state):
+    def is_valid(self, state):
         for i in self.b:
             if i<0 or i>7:
                 return False
         #check if not going to black
-        enemy_positions = [tuple(mem[1:3]) for mem in state[enemy]]
+        enemy_positions = [tuple(mem[1:3]) for mem in state[self.enemy]]
         if self.b in enemy_positions:
             return False
         return True
 
     @classmethod
-    def move_from_attributes(cls, n, coord, step, direction):
+    def move_from_attributes(cls, n, coord, step, direction, colour):
         return cls("MOVE", n, coord, (coord[0]+step*direction[0], coord[1]+step*direction[1]), colour)
 
     @classmethod
-    def action_from_tuple(cls, tup):
+    def action_from_tuple(cls, tup, colour):
         if len(tup) == 2:
-            return cls(tup[0], 1, tup[1], tup[1])
-        else if len(tup) == 4:
-            return cls(tup[0], tup[1], tup[2], tup[3]) 
+            return cls(tup[0], 1, tup[1], tup[1], colour)
+        elif len(tup) == 4:
+            return cls(tup[0], tup[1], tup[2], tup[3], colour)

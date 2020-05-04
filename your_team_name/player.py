@@ -38,7 +38,7 @@ class ExamplePlayer:
         if self.colour == "white": #white maximizer
             best_eval = -1000
             for action in all_actions:
-                (eval_child, action_child) = minimax(action, state, 0, "black")
+                (eval_child, action_child) = minimax(action, self.state, 0, "black")
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action_child
@@ -46,7 +46,7 @@ class ExamplePlayer:
         else:
             best_eval = 1000
             for action in all_actions:
-                (eval_child, action_child) = minimax(action, state, 0, "white")
+                (eval_child, action_child) = minimax(action, self.state, 0, "white")
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action_child
@@ -73,7 +73,7 @@ class ExamplePlayer:
         against the game rules).
         """
         # TODO: Update state representation in response to action.
-        action_object = Action.from_tuple(action)
+        action_object = Action.from_tuple(action, colour)
         self.state = action_object.apply_to(self.state)
         return self.state
 
@@ -82,8 +82,8 @@ def minimax(action, state, current_depth, turn):
     state = action.apply_to(state)
     if turn == "white": #white maximizer
         best_eval = -1000
-        if current_depth == MAX_DEPTH || winner(state) != "white":
-            return (evaluation(state), state)
+        if current_depth == MAX_DEPTH or winner(state) != "white":
+            return (evaluation(state), action)
 
         for possible_action in all_possible_actions(state, turn):
             (eval_child, action_child) = minimax(possible_action, state, current_depth+1, "black")
@@ -94,8 +94,8 @@ def minimax(action, state, current_depth, turn):
 
     else: #black minimizer
         best_eval = 1000
-        if current_depth == MAX_DEPTH || winner(state) != "black":
-            return (evaluation(state), state)
+        if current_depth == MAX_DEPTH or winner(state) != "black":
+            return (evaluation(state), action)
         state = action.apply_to(state)
         for possible_action in all_possible_actions(state, turn):
             (eval_child, action_child) = minimax(possible_action, state, current_depth+1, "white")
@@ -132,7 +132,7 @@ def all_possible_actions(state, colour):
             for step in range(1, member[0]+1):
                 for direction in MOVE_DIRECTIONS:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
-                    if move_action.is_valid():
+                    if move_action.is_valid(state):
                         all_actions.append(move_action)
-        all_actions.append(Action("BOOM", 1, coord, coord))
+        all_actions.append(Action("BOOM", 1, coord, coord, colour))
     return all_actions
