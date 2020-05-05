@@ -75,6 +75,7 @@ class ExamplePlayer:
         """
         # TODO: Update state representation in response to action.
         action_object = Action.from_tuple(action, colour)
+
         self.state = action_object.apply_to(self.state)
         return self.state
 
@@ -135,5 +136,5 @@ def all_possible_actions(state, colour):
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid(state):
                         all_actions.append(move_action)
-        all_actions.append(Action("BOOM", 1, coord, coord, colour))
+        all_actions.append(Action("BOOM", None, coord, None, colour))
     return all_actions

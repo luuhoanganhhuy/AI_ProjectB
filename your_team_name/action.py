@@ -43,7 +43,9 @@ class Action:
             return new_state
         def move(current_state, number, coord, f_coord, colour):
             new_state = copy.deepcopy(current_state)
-
+            #print("COLOUR:", colour)
+            #print("CHANGING INTERNAL STATE")
+            #print("FROM", new_state)
             #if moving onto another white then form a stack
             white_list=[[white[1], white[2]] for white in current_state[colour]]
             if f_coord in white_list:
@@ -74,7 +76,7 @@ class Action:
                     if number < white_member[0]:
                         white_member[0] -= number
                         new_state[colour] += [[number] + f_coord]
-
+            #print("TO  ", new_state)
             return new_state
 
         if self.type == "BOOM":
@@ -107,6 +109,6 @@ class Action:
     @classmethod
     def from_tuple(cls, tup, colour):
         if len(tup) == 2:
-            return cls(tup[0], 1, tup[1], tup[1], colour)
+            return cls(tup[0], None, tup[1], None, colour)
         elif len(tup) == 4:
             return cls(tup[0], tup[1], tup[2], tup[3], colour)
