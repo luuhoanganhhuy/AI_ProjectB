@@ -17,9 +17,9 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
-        self.state = {"white": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
+        self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
                                 [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
-                      "black": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
+                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
                                 [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
         self.colour = colour
 
@@ -34,6 +34,7 @@ class ExamplePlayer:
         """
         # TODO: Decide what action to take, and return it
         all_actions = all_possible_actions(self.state, self.colour)
+
         best_action = None
         if self.colour == "white": #white maximizer
             best_eval = -1000

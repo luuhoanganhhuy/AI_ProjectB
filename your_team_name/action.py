@@ -105,7 +105,7 @@ class Action:
         return cls("MOVE", n, coord, (coord[0]+step*direction[0], coord[1]+step*direction[1]), colour)
 
     @classmethod
-    def action_from_tuple(cls, tup, colour):
+    def from_tuple(cls, tup, colour):
         if len(tup) == 2:
             return cls(tup[0], 1, tup[1], tup[1], colour)
         elif len(tup) == 4:
