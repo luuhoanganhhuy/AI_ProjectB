@@ -1,7 +1,7 @@
 
 from your_team_name.action import Action
 
-MAX_DEPTH = 16
+MAX_DEPTH = 2
 MOVE_DIRECTIONS = [(+1,0), (0,+1), (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -40,17 +40,22 @@ class ExamplePlayer:
             best_eval = -1000
             for action in all_actions:
                 (eval_child, action_child) = minimax(action, self.state, 0, "black")
+                print(eval_child, " ", action_child.return_action())
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action_child
+            print("\n------BEST EVAL:", best_eval)
             return best_action.return_action()
         else:
             best_eval = 1000
             for action in all_actions:
                 (eval_child, action_child) = minimax(action, self.state, 0, "white")
+                print(eval_child, " ", action_child.return_action())
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action_child
+
+            print("\n------BEST EVAL:", best_eval)
             return best_action.return_action()
 
 
@@ -74,21 +79,26 @@ class ExamplePlayer:
         against the game rules).
         """
         # TODO: Update state representation in response to action.
+        #self.colour = colour
         action_object = Action.from_tuple(action, colour)
-
+        print("CHANGING INTERNAL STATE")
+        print("FROM", self.state)
         self.state = action_object.apply_to(self.state)
+        print("TO  ", self.state)
         return self.state
 
 def minimax(action, state, current_depth, turn):
+    print("ACTION:", action.return_action(), " STATE: ", state)
     best_action = None
     state = action.apply_to(state)
+    print("AFTER APPLYING ACTION:", state)
+    if current_depth == MAX_DEPTH or winner(state) != "none":
+        return (evaluation(state), action)
     if turn == "white": #white maximizer
         best_eval = -1000
-        if current_depth == MAX_DEPTH or winner(state) != "white":
-            return (evaluation(state), action)
-
         for possible_action in all_possible_actions(state, turn):
             (eval_child, action_child) = minimax(possible_action, state, current_depth+1, "black")
+
             if eval_child > best_eval:
                 best_eval = eval_child
                 best_action = action_child
@@ -96,11 +106,11 @@ def minimax(action, state, current_depth, turn):
 
     else: #black minimizer
         best_eval = 1000
-        if current_depth == MAX_DEPTH or winner(state) != "black":
-            return (evaluation(state), action)
+
         state = action.apply_to(state)
         for possible_action in all_possible_actions(state, turn):
             (eval_child, action_child) = minimax(possible_action, state, current_depth+1, "white")
+
             if eval_child < best_eval:
                 best_eval = eval_child
                 best_action = action_child
@@ -123,7 +133,8 @@ def count_members(team):
     return count
 
 def evaluation(state):
-    return count_members(state["white"]) - count_members(state["black"])
+    result = count_members(state["white"]) - count_members(state["black"])
+    return result
 
 def all_possible_actions(state, colour):
     all_actions = []
