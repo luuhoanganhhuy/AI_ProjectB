@@ -33,14 +33,16 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
+        print("STATE:", self.state)
         all_actions = all_possible_actions(self.state, self.colour)
-
+        for a in all_actions:
+            print(a.return_action())
         best_action = None
         if self.colour == "white": #white maximizer
             best_eval = -1000
             for action in all_actions:
                 (eval_child, action_child) = minimax(action, self.state, 0, "black")
-                print(eval_child, " ", action_child.return_action())
+                #print(eval_child, " ", action_child.return_action())
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action_child
@@ -50,7 +52,7 @@ class ExamplePlayer:
             best_eval = 1000
             for action in all_actions:
                 (eval_child, action_child) = minimax(action, self.state, 0, "white")
-                print(eval_child, " ", action_child.return_action())
+                #print(eval_child, " ", action_child.return_action())
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action_child
@@ -88,10 +90,8 @@ class ExamplePlayer:
         return self.state
 
 def minimax(action, state, current_depth, turn):
-    print("ACTION:", action.return_action(), " STATE: ", state)
     best_action = None
     state = action.apply_to(state)
-    print("AFTER APPLYING ACTION:", state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
         return (evaluation(state), action)
     if turn == "white": #white maximizer
