@@ -18,13 +18,12 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
-        self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
-                                [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
-                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
-                                [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
-        #self.state = {"black": [[1,0,6], [1,4,5], [1,3,2]],
-        #              "white": [[1,6,7], [1,4,1], [1,6,1], [1,7,1],
+        #self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
+        #                        [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+        #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
         #                        [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
+        self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
 
     def action(self):
@@ -118,6 +117,7 @@ def evaluation(state):
 def all_possible_actions(state, colour):
     all_actions = []
     all_directions = []
+    factor = 1 if colour == "white" else -1
     for member in state[colour]:
         coord = tuple(member[1:3])
         for n in range(1, member[0]+1):
@@ -126,4 +126,7 @@ def all_possible_actions(state, colour):
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid(state):
                         all_actions.append(move_action)
+        boom_action = Action("BOOM", None, coord, None, colour)
+        if evaluation(boom_action.apply_to(state))*factor > 0:
+            all_actions.append(boom_action)
     return all_actions

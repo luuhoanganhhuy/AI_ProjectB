@@ -113,13 +113,13 @@ def play(players,
 
 _ALL_SQUARES = {(x, y) for x in range(8) for y in range(8)}
 
-_BLACK_START_SQUARES = [(0,7), (1,7),   (3,7), (4,7),   (6,7), (7,7),
-                        (0,6), (1,6),   (3,6), (4,6),   (6,6), (7,6)]
-_WHITE_START_SQUARES = [(0,1), (1,1),   (3,1), (4,1),   (6,1), (7,1),
-                        (0,0), (1,0),   (3,0), (4,0),   (6,0), (7,0)]
+#_BLACK_START_SQUARES = [(0,7), (1,7),   (3,7), (4,7),   (6,7), (7,7),
+#                        (0,6), (1,6),   (3,6), (4,6),   (6,6), (7,6)]
+#_WHITE_START_SQUARES = [(0,1), (1,1),   (3,1), (4,1),   (6,1), (7,1),
+#                        (0,0), (1,0),   (3,0), (4,0),   (6,0), (7,0)]
 
-#_BLACK_START_SQUARES = [(0,6), (4,5), (3,2)]
-#_WHITE_START_SQUARES = [(6,7), (4,1), (6,1), (7,1), (0,0), (1,0), (3,0), (4,0), (6,0), (7,0)]
+_BLACK_START_SQUARES = [(0,6), (1,6),   (3,6), (4,6),   (6,6), (7,6)]
+_WHITE_START_SQUARES = [(0,1), (1,1),   (3,1), (4,1),   (6,1), (7,1)]
 
 def _NEXT_SQUARES(square, d=1):
     x, y = square
@@ -152,7 +152,7 @@ class Game:
             self.board[xy] = -1
         # also keep track of some other state variables for win/draw
         # detection (score, number of turns, state history)
-        self.score = {'white': 12, 'black': 12}
+        self.score = {'white': 6, 'black': 6}
         self.drawmsg = ""
         self.nturns  = 0
         self.history = Counter({self._snap(): 1})

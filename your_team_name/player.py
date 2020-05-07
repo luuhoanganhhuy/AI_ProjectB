@@ -2,7 +2,7 @@
 from your_team_name.action import Action
 import random
 
-MAX_DEPTH = 2
+MAX_DEPTH = 4
 MOVE_DIRECTIONS = [(+1,0), (0,+1), (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -18,13 +18,12 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
-        self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
-                                [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
-                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
-                                [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
-        #self.state = {"black": [[1,0,6], [1,4,5], [1,3,2]],
-        #              "white": [[1,6,7], [1,4,1], [1,6,1], [1,7,1],
+        #self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
+        #                        [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+        #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
         #                        [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
+        self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
 
     def action(self):
@@ -37,16 +36,16 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
-        #print("STATE:", self.state)
         all_actions = all_possible_actions(self.state, self.colour)
         random.shuffle(all_actions)
         #for a in all_actions:
-            #print(a.return_action())
+        #    print(a.return_action())
         best_action = None
         if self.colour == "white": #white maximizer
             best_eval = -1000
             for action in all_actions:
-                eval_child = minimax(action, self.state, 0, "black")
+                eval_child = alphabeta(action, self.state, 0, "black", -1000, 1000)
+                #eval_child = minimax(action, self.state, 0, "black")
                 #print(eval_child, " ", action_child.return_action())
                 if eval_child > best_eval:
                     best_eval = eval_child
@@ -56,7 +55,8 @@ class ExamplePlayer:
         else:
             best_eval = 1000
             for action in all_actions:
-                eval_child = minimax(action, self.state, 0, "white")
+                eval_child = alphabeta(action, self.state, 0, "white", -1000, 1000)
+                #eval_child = minimax(action, self.state, 0, "white")
                 #print(eval_child, " ", action_child.return_action())
                 if eval_child < best_eval:
                     best_eval = eval_child
@@ -90,6 +90,27 @@ class ExamplePlayer:
         action_object = Action.from_tuple(action, colour)
         self.state = action_object.apply_to(self.state)
         return self.state
+
+def alphabeta(action, state, current_depth, turn, alpha, beta):
+    state = action.apply_to(state)
+    if current_depth == MAX_DEPTH or winner(state) != "none":
+        return evaluation(state)
+
+    all_actions = all_possible_actions(state, turn)
+    random.shuffle(all_actions)
+    if turn == "white":
+        for action in all_actions:
+            alpha = max(alpha, alphabeta(action, state, current_depth+1, "black", alpha, beta))
+            if alpha >= beta:
+                break
+        return alpha
+
+    else:
+        for action in all_actions:
+            beta = min(beta, alphabeta(action, state, current_depth+1, "white", alpha, beta))
+            if alpha >= beta:
+                break
+        return beta
 
 def minimax(action, state, current_depth, turn):
     #best_action = None
@@ -142,7 +163,7 @@ def evaluation(state):
         result = 100
     elif winner(state) == "black":
         result = -100
-    result = count_members(state["white"]) - 2*count_members(state["black"])
+    result = count_members(state["white"]) - count_members(state["black"])
     for member in state["white"]:
         if member[0] > 2:
             result = result - 5
