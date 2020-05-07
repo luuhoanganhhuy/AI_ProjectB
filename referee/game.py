@@ -118,6 +118,9 @@ _BLACK_START_SQUARES = [(0,7), (1,7),   (3,7), (4,7),   (6,7), (7,7),
 _WHITE_START_SQUARES = [(0,1), (1,1),   (3,1), (4,1),   (6,1), (7,1),
                         (0,0), (1,0),   (3,0), (4,0),   (6,0), (7,0)]
 
+#_BLACK_START_SQUARES = [(0,6), (4,5), (3,2)]
+#_WHITE_START_SQUARES = [(6,7), (4,1), (6,1), (7,1), (0,0), (1,0), (3,0), (4,0), (6,0), (7,0)]
+
 def _NEXT_SQUARES(square, d=1):
     x, y = square
     return {        (x,y+d),
@@ -131,7 +134,7 @@ def _NEAR_SQUARES(square):
             (x-1,y-1),(x,y-1),(x+1,y-1)} & _ALL_SQUARES
 
 _MAX_TURNS = 250 # per player
- 
+
 
 
 class Game:
@@ -179,7 +182,7 @@ class Game:
             self._log("game", "Start game log at", time.asctime())
         else:
             self._logfile = None
-        
+
     def update(self, colour, action):
         """
         Submit an action to the game for validation and application.
@@ -244,13 +247,13 @@ class Game:
 
     def _turn_detect_draw(self):
         """
-        Register that a turn has passed: Update turn counts and 
+        Register that a turn has passed: Update turn counts and
         detect repeated game states.
         """
         self.nturns += 1
         if self.nturns >= _MAX_TURNS * 2:
             self.drawmsg = "maximum number of turns reached."
-        
+
         state = self._snap()
         self.history[state] += 1
         if self.history[state] >= 4:
