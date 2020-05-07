@@ -2,7 +2,7 @@
 from your_team_name.action import Action
 import random
 
-MAX_DEPTH = 3
+MAX_DEPTH = 2
 MOVE_DIRECTIONS = [(+1,0), (0,+1), (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -111,7 +111,6 @@ def minimax(action, state, current_depth, turn):
 
     else: #black minimizer
         best_eval = 1000
-        state = action.apply_to(state)
         for possible_action in all_actions:
             eval_child = minimax(possible_action, state, current_depth+1, "white")
 
