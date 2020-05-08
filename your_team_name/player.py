@@ -34,6 +34,10 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
+        if count_members(self.state["white"]) <= 8:
+            MAX_DEPTH = 2
+        if count_members(self.state["white"]) <= 4:
+            MAX_DEPTH = 3
         all_actions = all_possible_actions(self.state, self.colour)
         for action in all_actions:
             if action == self.prev_action:
@@ -267,7 +271,7 @@ def evaluation(state):
         return 100
     if winner(state) == "black":
         return -100
-    result = count_members(state["white"]) - count_members(state["black"])
+    result = 2*(count_members(state["white"]) - count_members(state["black"]))
     #for member in state["white"]:
     #    if member[0] > 2:
     #        result = result - 5

@@ -103,14 +103,10 @@ class Action:
             if i<0 or i>7:
                 return False
         #check if not going to black
-        enemy_positions = [tuple(mem[1:3]) for mem in (state[self.enemy] + state[self.colour])]
+        enemy_positions = [tuple(mem[1:3]) for mem in (state[self.enemy]+state[self.colour])]
         if self.b in enemy_positions:
             return False
         return True
-
-    @classmethod
-    def rewind_move(cls, action):
-        return cls(action.type, action.n, action.b, action.a, action.colour)
 
     @classmethod
     def move_from_attributes(cls, n, coord, step, direction, colour):
