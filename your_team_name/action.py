@@ -109,6 +109,10 @@ class Action:
         return True
 
     @classmethod
+    def rewind_move(cls, action):
+        return cls(action.type, action.n, action.b, action.a, action.colour)
+
+    @classmethod
     def move_from_attributes(cls, n, coord, step, direction, colour):
         return cls("MOVE", n, coord, (coord[0]+step*direction[0], coord[1]+step*direction[1]), colour)
 

@@ -3,7 +3,7 @@ from your_team_name.action import Action
 import random
 
 MAX_DEPTH = 4
-MOVE_DIRECTIONS = [(+1,0), (0,+1), (-1,0), (0,-1)]
+MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
 
 class ExamplePlayer:
     def __init__(self, colour):
@@ -18,13 +18,14 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
-        #self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
-        #                        [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
-        #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
-        #                        [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
-        self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
-                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
+        self.state = {"black": [[1,0,7], [1,1,7], [1,3,7], [1,4,7], [1,6,7], [1,7,7],
+                                [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+                      "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
+                                [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
+        #self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+        #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
+        self.prev_action = None
 
     def action(self):
         """
@@ -37,7 +38,11 @@ class ExamplePlayer:
         """
         # TODO: Decide what action to take, and return it
         all_actions = all_possible_actions(self.state, self.colour)
-        random.shuffle(all_actions)
+        for action in all_actions:
+            if action == self.prev_action:
+                all_actions.remove(action)
+                break
+        #random.shuffle(all_actions)
         #for a in all_actions:
         #    print(a.return_action())
         best_action = None
@@ -51,6 +56,7 @@ class ExamplePlayer:
                     best_eval = eval_child
                     best_action = action
             print("\n------BEST EVAL:", best_eval)
+            self.prev_action = best_action
             return best_action.return_action()
         else:
             best_eval = 1000
@@ -61,7 +67,7 @@ class ExamplePlayer:
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action
-
+            self.prev_action = best_action
             print("\n------BEST EVAL:", best_eval)
             return best_action.return_action()
 
@@ -97,7 +103,7 @@ def alphabeta(action, state, current_depth, turn, alpha, beta):
         return evaluation(state)
 
     all_actions = all_possible_actions(state, turn)
-    random.shuffle(all_actions)
+    #random.shuffle(all_actions)
     if turn == "white":
         for action in all_actions:
             alpha = max(alpha, alphabeta(action, state, current_depth+1, "black", alpha, beta))
@@ -158,30 +164,35 @@ def count_members(team):
     return count
 
 def evaluation(state):
-    result = 0
     if winner(state) == "white":
-        result = 100
-    elif winner(state) == "black":
-        result = -100
+        return 100
+    if winner(state) == "black":
+        return -100
     result = count_members(state["white"]) - count_members(state["black"])
     for member in state["white"]:
         if member[0] > 2:
             result = result - 5
+
     return result
 
 def all_possible_actions(state, colour):
     all_actions = []
     all_directions = []
+    all_move_actions = []
     factor = 1 if colour == "white" else -1
     for member in state[colour]:
         coord = tuple(member[1:3])
+        boom_action = Action("BOOM", None, coord, None, colour)
+        if evaluation(boom_action.apply_to(state))*factor > 0:
+            all_actions.append(boom_action)
+
         for n in range(1, 2):
             for step in range(1, member[0]+1):
                 for direction in MOVE_DIRECTIONS:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
-                    if move_action.is_valid(state): #and evaluation(move_action.apply_to(state))*factor > 0:
-                        all_actions.append(move_action)
-        boom_action = Action("BOOM", None, coord, None, colour)
-        if evaluation(boom_action.apply_to(state))*factor > 0:
-            all_actions.append(boom_action)
+                    if move_action.is_valid(state):
+                        all_move_actions.append(move_action)
+
+    #random.shuffle(all_move_actions)
+    all_actions.extend(all_move_actions)
     return all_actions
