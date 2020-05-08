@@ -103,7 +103,7 @@ class Action:
             if i<0 or i>7:
                 return False
         #check if not going to black
-        enemy_positions = [tuple(mem[1:3]) for mem in (state[self.enemy]+state[self.colour])]
+        enemy_positions = [tuple(mem[1:3]) for mem in (state[self.enemy])]
         if self.b in enemy_positions:
             return False
         return True

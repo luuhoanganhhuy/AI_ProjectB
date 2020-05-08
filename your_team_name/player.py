@@ -1,8 +1,7 @@
-
 from your_team_name.action import Action
 import random
 
-MAX_DEPTH = 4
+MAX_DEPTH = 1
 MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -12,7 +11,6 @@ class ExamplePlayer:
         your player. You should use this opportunity to set up your own internal
         representation of the game state, and any other information about the
         game state you would like to maintain for the duration of the game.
-
         The parameter colour will be a string representing the player your
         program will play as (White or Black). The value will be one of the
         strings "white" or "black" correspondingly.
@@ -31,7 +29,6 @@ class ExamplePlayer:
         """
         This method is called at the beginning of each of your turns to request
         a choice of action from your program.
-
         Based on the current state of the game, your player should select and
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
@@ -42,6 +39,9 @@ class ExamplePlayer:
             if action == self.prev_action:
                 all_actions.remove(action)
                 break
+
+        a = heuristic(self.state)
+        print(a)
         #random.shuffle(all_actions)
         #for a in all_actions:
         #    print(a.return_action())
@@ -79,14 +79,11 @@ class ExamplePlayer:
         turns) to inform your player about the most recent action. You should
         use this opportunity to maintain your internal representation of the
         game state and any other information about the game you are storing.
-
         The parameter colour will be a string representing the player whose turn
         it is (White or Black). The value will be one of the strings "white" or
         "black" correspondingly.
-
         The parameter action is a representation of the most recent action
         conforming to the spec's instructions for representing actions.
-
         You may assume that action will always correspond to an allowed action
         for the player colour (your method does not need to validate the action
         against the game rules).
@@ -96,6 +93,109 @@ class ExamplePlayer:
         action_object = Action.from_tuple(action, colour)
         self.state = action_object.apply_to(self.state)
         return self.state
+def heuristic(state):
+    dict_black_coord = {(x, y) for _, x, y in state['black']}
+    h = 0
+    for group in find_explosion_groups(dict_black_coord):
+        matrics = distance_grid(group)
+        dict_white_coord = {(x, y) for _, x, y in state['white']}
+        h += min(matrics[white_coord] for white_coord in dict_white_coord)
+    return h
+
+def distance_grid(group):
+    """
+    Precompute a Manhattan distance landscape for a particular group of
+    squares---a dictionary of #steps until within explosive zone.
+    """
+    radius = around_group(group)
+    grid = {}
+    for xy in BOARD_SQUARES:
+        grid[xy] = min(manhattan_distance(xy, square) for square in radius)
+    return grid
+
+def manhattan_distance(xy_a, xy_b):
+    """
+    Number of steps between two squares allowing only
+    up, down, left and right steps.
+    """
+    x_a, y_a = xy_a
+    x_b, y_b = xy_b
+    return abs(x_a-x_b) + abs(y_a-y_b)
+BOARD_SQUARES = {(x,y) for x in range(8) for y in range(8)}
+
+BOOM_RADIUS = [(-1,+1), (+0,+1), (+1,+1),
+               (-1,+0),          (+1,+0),
+               (-1,-1), (+0,-1), (+1,-1)]
+def around_square(xy):
+    """
+    Generate the list of squares surrounding a square
+    (those affected by a boom action).
+    """
+    x, y = xy
+    for dx, dy in BOOM_RADIUS:
+        square = x+dx, y+dy
+        if square in BOARD_SQUARES:
+            yield square
+
+def around_group(group):
+    """The set of squares in explosive range of a set of squares."""
+    return set.union(set(group), *[around_square(sq) for sq in group])
+
+def find_explosion_groups(targets):
+    """
+    Partition a set of targets into groups that will 'boom' together.
+    'targets' is a set of coordinate pairs. Return a set of frozensets
+    representing the partition.
+    """
+    # 'up' is a union-find tree-based data structure
+    up = {t: t for t in targets}
+    # find performs a root lookup with path compression in 'up'
+    def find(t):
+        if up[t] == t:
+            return t
+        top = find(up[t])
+        up[t] = top
+        return top
+    # run disjoint set formation algorithm to identify groups
+    for t in targets:
+        ttop = find(t)
+        for u in around_square(t):
+            if u in targets:
+                utop = find(u)
+                if ttop != utop:
+                    up[utop] = ttop
+    # convert disjoint set trees into Python sets
+    groups = {}
+    for t in targets:
+        top = find(t)
+        if top in groups:
+            groups[top].add(t)
+        else:
+            groups[top] = {t}
+    # return the partition
+    return {frozenset(group) for group in groups.values()}
+#def heuristic()
+
+def alphabeta(action, state, current_depth, turn, alpha, beta):
+    state = action.apply_to(state)
+    if current_depth == MAX_DEPTH or winner(state) != "none":
+        return evaluation(state)
+
+    all_actions = all_possible_actions(state, turn)
+    #random.shuffle(all_actions)
+    if turn == "white":
+        for action in all_actions:
+            alpha = max(alpha, alphabeta(action, state, current_depth+1, "black", alpha, beta))
+            if alpha >= beta:
+                break
+        return alpha
+
+    else:
+        for action in all_actions:
+            beta = min(beta, alphabeta(action, state, current_depth+1, "white", alpha, beta))
+            if alpha >= beta:
+                break
+        return beta
 
 def alphabeta(action, state, current_depth, turn, alpha, beta):
     state = action.apply_to(state)
@@ -168,11 +268,11 @@ def evaluation(state):
     if winner(state) == "black":
         return -100
     result = count_members(state["white"]) - count_members(state["black"])
-    for member in state["white"]:
-        if member[0] > 2:
-            result = result - 5
+    #for member in state["white"]:
+    #    if member[0] > 2:
+    #        result = result - 5
 
-    return result
+    return result - heuristic(state)
 
 def all_possible_actions(state, colour):
     all_actions = []
@@ -192,5 +292,6 @@ def all_possible_actions(state, colour):
                     if move_action.is_valid(state):
                         all_move_actions.append(move_action)
 
+    #random.shuffle(all_move_actions)
     all_actions.extend(all_move_actions)
     return all_actions
