@@ -103,7 +103,6 @@ def alphabeta(action, state, current_depth, turn, alpha, beta):
         return evaluation(state)
 
     all_actions = all_possible_actions(state, turn)
-    #random.shuffle(all_actions)
     if turn == "white":
         for action in all_actions:
             alpha = max(alpha, alphabeta(action, state, current_depth+1, "black", alpha, beta))
@@ -193,6 +192,5 @@ def all_possible_actions(state, colour):
                     if move_action.is_valid(state):
                         all_move_actions.append(move_action)
 
-    #random.shuffle(all_move_actions)
     all_actions.extend(all_move_actions)
     return all_actions
