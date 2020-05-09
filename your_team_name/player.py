@@ -252,7 +252,7 @@ def evaluation(state):
     #    if member[0] > 2:
     #        result = result - 5
 
-    return result - heuristic(state)
+    return result*10 - heuristic(state)
 
 def all_possible_actions(state, colour):
     all_actions = []
