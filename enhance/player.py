@@ -26,6 +26,8 @@ class ExamplePlayer:
         self.prev_action = None
         self.max_depth = 1
 
+
+
     def action(self):
         """
         This method is called at the beginning of each of your turns to request
@@ -35,16 +37,15 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
-        if count_members(self.state["white"]) <= 8:
-            MAX_DEPTH = 2
-        if count_members(self.state["white"]) <= 4:
-            MAX_DEPTH = 3
+        #if count_members(self.state["white"]) <= 8:
+        #    MAX_DEPTH = 2
+        #if count_members(self.state["white"]) <= 4:
+        #    MAX_DEPTH = 3
         all_actions = all_possible_actions(self.state, self.colour)
         for action in all_actions:
             if action == self.prev_action:
                 all_actions.remove(action)
                 break
-
         #random.shuffle(all_actions)
         #for a in all_actions:
         #    print(a.return_action())
@@ -182,9 +183,10 @@ def find_explosion_groups(targets):
 #def heuristic()
 
 def alphabeta(action, state, current_depth, turn, alpha, beta):
+    pre_state = state
     state = action.apply_to(state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state, turn)
+        return evaluation(state, turn,pre_state)
 
     all_actions = all_possible_actions(state, turn)
     #random.shuffle(all_actions)
@@ -204,9 +206,10 @@ def alphabeta(action, state, current_depth, turn, alpha, beta):
 
 def minimax(action, state, current_depth, turn):
     #best_action = None
+    pre_state = state
     state = action.apply_to(state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state, turn)
+        return evaluation(state, turn,pre_state)
     all_actions = all_possible_actions(state, turn)
     random.shuffle(all_actions)
     if turn == "white": #white maximizer
@@ -247,17 +250,20 @@ def count_members(team):
         count += member[0]
     return count
 
-def evaluation(state, colour):
+def evaluation(state, colour,pre_state):
     if winner(state) == "white":
         return 100
     if winner(state) == "black":
         return -100
-    result = 10*(count_members(state["white"]) - count_members(state["black"]))
-    #if count_members(state["white"])
-    #for member in state["white"]:
-    #    if member[0] > 2:
-    #        result = result - 5
+    result = 5*(count_members(state["white"]) - count_members(state["black"]))
+    #black_destroy = (count_members(pre_state["white"]) - count_members(state["white"])) - (count_members(pre_state["black"]) - count_members(state["black"]))
+    #result += black_destroy
+    dict_white_coord = {(x, y) for _, x, y in state['white']}
+    white_clusters = find_explosion_groups(dict_white_coord)
+    dict_black_coord = {(x, y) for _, x, y in state['black']}
+    black_clusters = find_explosion_groups(dict_black_coord)
     factor = 1 if colour == "white" else -1
+    result += 2*(len(white_clusters) - len(black_clusters))
     return result - factor*heuristic(state, colour)
 
 def all_possible_actions(state, colour):
