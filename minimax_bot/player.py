@@ -82,12 +82,13 @@ class ExamplePlayer:
         self.state = action_object.apply_to(self.state)
         return self.state
 
-def heuristic(state):
-    dict_black_coord = {(x, y) for _, x, y in state['black']}
+def heuristic(state, colour):
+    enemy = 'white' if colour == 'black' else 'black'
+    dict_black_coord = {(x, y) for _, x, y in state[enemy]}
     h = 0
     for group in find_explosion_groups(dict_black_coord):
         matrics = distance_grid(group)
-        dict_white_coord = {(x, y) for _, x, y in state['white']}
+        dict_white_coord = {(x, y) for _, x, y in state[colour]}
         h += min(matrics[white_coord] for white_coord in dict_white_coord)
     return h
 
@@ -169,7 +170,7 @@ def minimax(action, state, current_depth, turn):
     #best_action = None
     state = action.apply_to(state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state)
+        return evaluation(state, turn)
     all_actions = all_possible_actions(state, turn)
     #random.shuffle(all_actions)
     if turn == "white": #white maximizer
@@ -209,12 +210,17 @@ def count_members(team):
         count += member[0]
     return count
 
-def evaluation(state):
+def evaluation(state, colour):
     if winner(state) == "white":
         return 100
     if winner(state) == "black":
         return -100
-    return 2*(count_members(state["white"]) - count_members(state["black"])) + heuristic(state)
+    result = 2*(count_members(state["white"]) - count_members(state["black"]))
+    #for member in state["white"]:
+    #    if member[0] > 2:
+    #        result = result - 5
+    factor = 1 if colour == "white" else -1
+    return result - factor*heuristic(state, colour)
 
 def all_possible_actions(state, colour):
     all_actions = []
@@ -224,7 +230,7 @@ def all_possible_actions(state, colour):
     for member in state[colour]:
         coord = tuple(member[1:3])
         boom_action = Action("BOOM", None, coord, None, colour)
-        if evaluation(boom_action.apply_to(state))*factor > 0:
+        if evaluation(boom_action.apply_to(state), turn)*factor > 0:
             all_actions.append(boom_action)
 
         for n in range(1, 2):

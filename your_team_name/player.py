@@ -24,6 +24,7 @@ class ExamplePlayer:
         #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
         self.prev_action = None
+        self.max_depth = 1
 
     def action(self):
         """
@@ -96,12 +97,13 @@ class ExamplePlayer:
         self.state = action_object.apply_to(self.state)
         return self.state
 
-def heuristic(state):
-    dict_black_coord = {(x, y) for _, x, y in state['black']}
+def heuristic(state, colour):
+    enemy = 'white' if colour == 'black' else 'black'
+    dict_black_coord = {(x, y) for _, x, y in state[enemy]}
     h = 0
     for group in find_explosion_groups(dict_black_coord):
         matrics = distance_grid(group)
-        dict_white_coord = {(x, y) for _, x, y in state['white']}
+        dict_white_coord = {(x, y) for _, x, y in state[colour]}
         h += min(matrics[white_coord] for white_coord in dict_white_coord)
     return h
 
@@ -182,7 +184,7 @@ def find_explosion_groups(targets):
 def alphabeta(action, state, current_depth, turn, alpha, beta):
     state = action.apply_to(state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state)
+        return evaluation(state, turn)
 
     all_actions = all_possible_actions(state, turn)
     #random.shuffle(all_actions)
@@ -204,7 +206,7 @@ def minimax(action, state, current_depth, turn):
     #best_action = None
     state = action.apply_to(state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state)
+        return evaluation(state, turn)
     all_actions = all_possible_actions(state, turn)
     random.shuffle(all_actions)
     if turn == "white": #white maximizer
@@ -245,7 +247,7 @@ def count_members(team):
         count += member[0]
     return count
 
-def evaluation(state):
+def evaluation(state, colour):
     if winner(state) == "white":
         return 100
     if winner(state) == "black":
@@ -254,10 +256,13 @@ def evaluation(state):
     #for member in state["white"]:
     #    if member[0] > 2:
     #        result = result - 5
-
-    return result - heuristic(state)
+    factor = 1 if colour == "white" else -1
+    return result - factor*heuristic(state, colour)
 
 def all_possible_actions(state, colour):
+    move_directions = MOVE_DIRECTIONS
+    if colour == "black":
+        move_directions = [(0,-1), (+1,0), (-1,0), (0,+1)]
     all_actions = []
     all_directions = []
     all_move_actions = []
@@ -265,12 +270,12 @@ def all_possible_actions(state, colour):
     for member in state[colour]:
         coord = tuple(member[1:3])
         boom_action = Action("BOOM", None, coord, None, colour)
-        if evaluation(boom_action.apply_to(state))*factor > 0:
+        if evaluation(boom_action.apply_to(state), colour)*factor > 0:
             all_actions.append(boom_action)
 
         for n in range(1, 2):
             for step in range(1, member[0]+1):
-                for direction in MOVE_DIRECTIONS:
+                for direction in move_directions:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid(state):
                         all_move_actions.append(move_action)
