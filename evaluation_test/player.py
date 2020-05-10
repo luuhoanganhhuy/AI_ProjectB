@@ -1,6 +1,7 @@
 from your_team_name.action import Action
 import random
 
+MAX_DEPTH = 8
 MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -19,10 +20,11 @@ class ExamplePlayer:
                                 [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
                       "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
                                 [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
+        #self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
+        #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
         self.prev_action = None
-        self.max_depth = 1
-        self.phase = 1
+        self.max_depth = 6
 
     def action(self):
         """
@@ -32,49 +34,43 @@ class ExamplePlayer:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
-        print(self.state)
         # TODO: Decide what action to take, and return it
-        if count_members(self.state[self.colour]) < 6:
-            self.max_depth =  2
-        if count_members(self.state[self.colour]) < 3:
-            self.max_depth = 3
-
-        if count_members(self.state[self.colour]) < 12:
-            self.phase = 2
-        if count_members(self.state[self.colour]) < 6:
-            self.phase = 3
+        #if count_members(self.state[self.colour]) <= 6:
+        #    self.max_depth = 2
+        #if count_members(self.state[self.colour]) < 4:
+        #    self.max_depth = 3
         all_actions = all_possible_actions(self.state, self.colour)
-        #for action in all_actions:
-        #    if action == self.prev_action:
-        #        all_actions.remove(action)
-        #        break
+        for action in all_actions:
+            if action == self.prev_action:
+                all_actions.remove(action)
+                break
 
         #random.shuffle(all_actions)
         #for a in all_actions:
         #    print(a.return_action())
         best_action = None
         if self.colour == "white": #white maximizer
-            best_eval = -10000
+            best_eval = -1000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, self.max_depth, 0, "black", -1000, 1000, self.phase)
+                eval_child = alphabeta(action, self.state, self.max_depth, 0, "black", -1000, 1000)
                 #eval_child = minimax(action, self.state, 0, "black")
                 #print(eval_child, " ", action_child.return_action())
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action
             #print("\n------BEST EVAL:", best_eval)
-            #self.prev_action = best_action
+            self.prev_action = best_action
             return best_action.return_action()
         else:
-            best_eval = 10000
+            best_eval = 1000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, self.max_depth, 0, "white", -1000, 1000, self.phase)
+                eval_child = alphabeta(action, self.state, self.max_depth, 0, "white", -1000, 1000)
                 #eval_child = minimax(action, self.state, 0, "white")
                 #print(eval_child, " ", action_child.return_action())
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action
-            #self.prev_action = best_action
+            self.prev_action = best_action
             #print("\n------BEST EVAL:", best_eval)
             return best_action.return_action()
 
@@ -185,26 +181,55 @@ def find_explosion_groups(targets):
     return {frozenset(group) for group in groups.values()}
 #def heuristic()
 
-def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase):
+def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta):
     state = action.apply_to(state)
     if current_depth == max_depth or winner(state) != "none":
-        return evaluation(state, turn, phase)
+        return evaluation(state, turn)
 
     all_actions = all_possible_actions(state, turn)
     #random.shuffle(all_actions)
     if turn == "white":
         for action in all_actions:
-            alpha = max(alpha, alphabeta(action, state, max_depth, current_depth+1, "black", alpha, beta, phase))
+            alpha = max(alpha, alphabeta(action, state, max_depth, current_depth+1, "black", alpha, beta))
             if alpha >= beta:
                 break
         return alpha
 
     else:
         for action in all_actions:
-            beta = min(beta, alphabeta(action, state, max_depth, current_depth+1, "white", alpha, beta, phase))
+            beta = min(beta, alphabeta(action, state, max_depth, current_depth+1, "white", alpha, beta))
             if alpha >= beta:
                 break
         return beta
+
+def minimax(action, state, current_depth, turn):
+    #best_action = None
+    state = action.apply_to(state)
+    if current_depth == MAX_DEPTH or winner(state) != "none":
+        return evaluation(state, turn)
+    all_actions = all_possible_actions(state, turn)
+    random.shuffle(all_actions)
+    if turn == "white": #white maximizer
+        best_eval = -1000
+        for possible_action in all_actions:
+            eval_child = minimax(possible_action, state, current_depth+1, "black")
+
+            if eval_child > best_eval:
+                best_eval = eval_child
+                #best_action = action
+        return best_eval
+        #return (best_eval, best_action)
+
+    else: #black minimizer
+        best_eval = 1000
+        for possible_action in all_actions:
+            eval_child = minimax(possible_action, state, current_depth+1, "white")
+
+            if eval_child < best_eval:
+                best_eval = eval_child
+                #best_action = action
+        return best_eval
+        #return (best_eval, best_action)
 
 def winner(state):
     if len(state["black"]) == 0 and len(state["white"]) == 0:
@@ -222,52 +247,18 @@ def count_members(team):
         count += member[0]
     return count
 
-def get_stack_num(team):
-    count = 0
-    for member in team:
-        if member[0] >= 2:
-            count += member[0]-1
-    if count > 7:
-        count = count/2
-    return count
-
-def evaluation(state, colour, phase):
+def evaluation(state, colour):
     if winner(state) == "white":
-        return 1000
+        return 100
     if winner(state) == "black":
-        return -1000
-
-    difference = count_members(state["white"]) - count_members(state["black"])
-    factor = 1 if colour == "white" else -1
-    if phase == 1:
-        return 5*difference - 2*factor*heuristic(state, colour) + 4*factor*get_stack_num(state[colour])
-
-    if phase == 2:
-        return 9*difference - 3*factor*heuristic(state, colour) + 2*factor*get_stack_num(state[colour])
-
-    else:
-        if colour == "white":
-            if count_members(state["white"]) > count_members(state["black"]):
-                difference = difference + 12 - (count_members(state["black"]))
-                return difference - factor*heuristic(state, colour) #+ factor*get_stack_num(state[colour])
-            else:
-                return 2*difference - factor*heuristic(state, colour)
-
-        else:
-            if count_members(state["white"]) < count_members(state["black"]):
-                difference = difference - 12 + (count_members(state["white"]))
-                return difference - factor*heuristic(state, colour)
-            else:
-                return 2*difference - factor*heuristic(state, colour)
-
-        #return 9*difference - 3*heuristic(state, colour) + 4*get_stack_num(state[colour])
-
-    #result = (count_members(state["white"]) - count_members(state["black"]))
+        return -100
+    result = (count_members(state["white"]) - count_members(state["black"]))
     #for member in state["white"]:
     #    if member[0] > 2:
     #        result = result - 5
     #factor = 1 if colour == "white" else -1
-    #return 2*result - 2*factor*heuristic(state, colour) + factor*get_stack_num(state[colour])
+    return result
+    #return result - factor*heuristic(state, colour)
 
 def all_possible_actions(state, colour):
     move_directions = MOVE_DIRECTIONS
@@ -283,7 +274,7 @@ def all_possible_actions(state, colour):
         #if evaluation(boom_action.apply_to(state), colour)*factor > 0:
         all_actions.append(boom_action)
 
-        for n in range(1, member[0]+1):
+        for n in range(1, 2):
             for step in range(1, member[0]+1):
                 for direction in move_directions:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
