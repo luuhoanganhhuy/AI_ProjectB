@@ -90,11 +90,7 @@ class Action:
         elif self.type == "MOVE":
             return move(state, self.n, self.a, self.b, self.colour)
         return state
-    def return_stack(self):
-        if self.type == "BOOM":
-            return 0
-        elif self.type == "MOVE":
-            return self.n
+
     def return_action(self):
         if self.type == "BOOM":
             return (self.type, self.a)

@@ -1,9 +1,8 @@
-from enhance.action import Action
+from tien_final.action import Action
 import random
-import copy
 
-MAX_DEPTH = 1
 MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
+
 class ExamplePlayer:
     def __init__(self, colour):
         """
@@ -23,8 +22,7 @@ class ExamplePlayer:
         self.colour = colour
         self.prev_action = None
         self.max_depth = 1
-
-
+        self.phase = 1
 
     def action(self):
         """
@@ -34,65 +32,50 @@ class ExamplePlayer:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
+        print(self.state)
         # TODO: Decide what action to take, and return it
-        #if count_members(self.state["white"]) <= 8:
-        #    MAX_DEPTH = 2
-        #if count_members(self.state["white"]) <= 4:
-        #    MAX_DEPTH = 3
-        global STATE
-        STATE= self.state
+        if count_members(self.state[self.colour]) < 6:
+            self.max_depth =  2
+        if count_members(self.state[self.colour]) < 3:
+            self.max_depth = 3
+
+        if count_members(self.state[self.colour]) < 12:
+            self.phase = 2
+        if count_members(self.state[self.colour]) < 6:
+            self.phase = 3
         all_actions = all_possible_actions(self.state, self.colour)
-        for action in all_actions:
-            if action == self.prev_action:
-                all_actions.remove(action)
-                break
-
-        dict_white_coord = {(x, y) for _, x, y in self.state['white']}
-        white_clusters = find_explosion_groups(dict_white_coord)
-        dict_black_coord = {(x, y) for _, x, y in self.state['black']}
-        black_clusters = find_explosion_groups(dict_black_coord)
-        best_dist=1000
-        best_coord=[0,0,0]
-        for n,x,y in self.state['white']:
-            dist = sum(distance_grid(group)[x,y] for group in black_clusters)
-            if dist < best_dist:
-                best_dist=dist
-                best_coord=[n,x,y]
-        attack_state = {'white':[best_coord],'black':self.state['black']}
-        #all_actions = all_possible_actions(attack_state,'white')
-
-
+        #for action in all_actions:
+        #    if action == self.prev_action:
+        #        all_actions.remove(action)
+        #        break
 
         #random.shuffle(all_actions)
         #for a in all_actions:
         #    print(a.return_action())
         best_action = None
         if self.colour == "white": #white maximizer
-            best_eval = -1000
+            best_eval = -10000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, 0, "black", -1000, 1000)
-                eval_child += action.return_stack()
+                eval_child = alphabeta(action, self.state, self.max_depth, 0, "black", -1000, 1000, self.phase)
                 #eval_child = minimax(action, self.state, 0, "black")
                 #print(eval_child, " ", action_child.return_action())
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action
-            print("\n------BEST EVAL:", best_eval)
-            self.prev_action = best_action
+            #print("\n------BEST EVAL:", best_eval)
+            #self.prev_action = best_action
             return best_action.return_action()
         else:
-            best_eval = 1000
+            best_eval = 10000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, 0, "white", -1000, 1000)
-                eval_child -= action.return_stack()
-
+                eval_child = alphabeta(action, self.state, self.max_depth, 0, "white", -1000, 1000, self.phase)
                 #eval_child = minimax(action, self.state, 0, "white")
                 #print(eval_child, " ", action_child.return_action())
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action
-            self.prev_action = best_action
-            print("\n------BEST EVAL:", best_eval)
+            #self.prev_action = best_action
+            #print("\n------BEST EVAL:", best_eval)
             return best_action.return_action()
 
 
@@ -202,56 +185,26 @@ def find_explosion_groups(targets):
     return {frozenset(group) for group in groups.values()}
 #def heuristic()
 
-def alphabeta(action, state, current_depth, turn, alpha, beta):
+def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase):
     state = action.apply_to(state)
-    if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state, turn)
+    if current_depth == max_depth or winner(state) != "none":
+        return evaluation(state, turn, phase)
 
-
-    #all_actions = all_possible_actions(attack_state, 'white')
     all_actions = all_possible_actions(state, turn)
     #random.shuffle(all_actions)
     if turn == "white":
         for action in all_actions:
-            alpha = max(alpha, alphabeta(action, state, current_depth+1, "black", alpha, beta))
+            alpha = max(alpha, alphabeta(action, state, max_depth, current_depth+1, "black", alpha, beta, phase))
             if alpha >= beta:
                 break
         return alpha
+
     else:
         for action in all_actions:
-            beta = min(beta, alphabeta(action, state, current_depth+1, "white", alpha, beta))
+            beta = min(beta, alphabeta(action, state, max_depth, current_depth+1, "white", alpha, beta, phase))
             if alpha >= beta:
                 break
         return beta
-
-def minimax(action, state, current_depth, turn):
-    #best_action = None
-    state = action.apply_to(state)
-    if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state, turn)
-    all_actions = all_possible_actions(state, turn)
-    #random.shuffle(all_actions)
-    if turn == "white": #white maximizer
-        best_eval = -1000
-        for possible_action in all_actions:
-            eval_child = minimax(possible_action, state, current_depth+1, "black")
-
-            if eval_child > best_eval:
-                best_eval = eval_child
-                #best_action = action
-        return best_eval
-        #return (best_eval, best_action)
-
-    else: #black minimizer
-        best_eval = 1000
-        for possible_action in all_actions:
-            eval_child = minimax(possible_action, state, current_depth+1, "white")
-
-            if eval_child < best_eval:
-                best_eval = eval_child
-                #best_action = action
-        return best_eval
-        #return (best_eval, best_action)
 
 def winner(state):
     if len(state["black"]) == 0 and len(state["white"]) == 0:
@@ -269,42 +222,74 @@ def count_members(team):
         count += member[0]
     return count
 
-def evaluation(state, colour):
-    if winner(state) == "white":
-        return 100
-    if winner(state) == "black":
-        return -100
-    result = 10*(count_members(state["white"]) - count_members(state["black"]))
-    black_destroy = 5*(-(count_members(STATE["white"]) - count_members(state["white"])) + 2*(count_members(STATE["black"]) - count_members(state["black"])))
-    result += black_destroy
+def get_stack_num(team):
+    count = 0
+    for member in team:
+        if member[0] >= 2:
+            count += member[0]-1
+    if count > 7:
+        count = count/2
+    return count
 
-    dict_white_coord = {(x, y) for _, x, y in state['white']}
-    white_clusters = find_explosion_groups(dict_white_coord)
-    dict_black_coord = {(x, y) for _, x, y in state['black']}
-    black_clusters = find_explosion_groups(dict_black_coord)
+def evaluation(state, colour, phase):
+    if winner(state) == "white":
+        return 1000
+    if winner(state) == "black":
+        return -1000
+
+    difference = count_members(state["white"]) - count_members(state["black"])
     factor = 1 if colour == "white" else -1
-    count = 1
-    pre_stack=0
-    for n,_,_ in STATE[colour]:
-        if n>=2:
-            pre_stack +=1
-    for n,x,y in state[colour]:
-        if n>=2 and count < 2:
-            if pre_stack ==0:
-                result -= factor*(- heuristic(state, colour)+min(distance_grid(group)[(x,y)] for group in white_clusters))
-            count+=1
-    result += 2*(len(white_clusters) - len(black_clusters))
-    return result - factor*heuristic(state, colour)
+    if phase == 1:
+        return 5*difference - 2*factor*heuristic(state, colour) + 4*factor*get_stack_num(state[colour])
+
+    if phase == 2:
+        return 9*difference - 3*factor*heuristic(state, colour) + 2*factor*get_stack_num(state[colour])
+
+    else:
+        if colour == "white":
+            if count_members(state["white"]) > count_members(state["black"]):
+                difference = difference + 12 - (count_members(state["black"]))
+                return difference - factor*heuristic(state, colour) #+ factor*get_stack_num(state[colour])
+            else:
+                return 2*difference - factor*heuristic(state, colour)
+
+        else:
+            if count_members(state["white"]) < count_members(state["black"]):
+                difference = difference - 12 + (count_members(state["white"]))
+                return difference - factor*heuristic(state, colour)
+            else:
+                return 2*difference - factor*heuristic(state, colour)
+
+        #return 9*difference - 3*heuristic(state, colour) + 4*get_stack_num(state[colour])
+
+    #result = (count_members(state["white"]) - count_members(state["black"]))
+    #for member in state["white"]:
+    #    if member[0] > 2:
+    #        result = result - 5
+    #factor = 1 if colour == "white" else -1
+    #return 2*result - 2*factor*heuristic(state, colour) + factor*get_stack_num(state[colour])
 
 def all_possible_actions(state, colour):
+    move_directions = MOVE_DIRECTIONS
+    if colour == "black":
+        move_directions = [(0,-1), (+1,0), (-1,0), (0,+1)]
     all_actions = []
+    all_directions = []
+    all_move_actions = []
+    factor = 1 if colour == "white" else -1
     for member in state[colour]:
         coord = tuple(member[1:3])
-        for n in range(1, member[0] + 1):
-            for step in range(1, member[0] + 1):
-                for direction in MOVE_DIRECTIONS:
+        boom_action = Action("BOOM", None, coord, None, colour)
+        #if evaluation(boom_action.apply_to(state), colour)*factor > 0:
+        all_actions.append(boom_action)
+
+        for n in range(1, member[0]+1):
+            for step in range(1, member[0]+1):
+                for direction in move_directions:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid(state):
-                        all_actions.append(move_action)
-        all_actions.append(Action("BOOM", None, coord, None, colour))
+                        all_move_actions.append(move_action)
+
+    #random.shuffle(all_move_actions)
+    all_actions.extend(all_move_actions)
     return all_actions
