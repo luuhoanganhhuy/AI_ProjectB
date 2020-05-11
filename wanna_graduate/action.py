@@ -10,9 +10,10 @@ class Action:
             self.enemy = "black"
         elif colour == "black":
             self.enemy = "white"
-
+    """ Return turn a state corresponding to the action"""
     def apply_to(self, state):
-        #return a state
+
+        """ Boom action """
         def boom(current_state, coord, boomed, colour, enemy):
             new_state = {}
             new_state[colour] = [x for x in current_state[colour] if x[1:3] != coord]
@@ -41,24 +42,22 @@ class Action:
                                 break;
 
             return new_state
+
+        """ Move action """
         def move(current_state, number, coord, f_coord, colour):
-            #print("\nMOVING ", colour, " FROM ", coord, " TO ", f_coord)
             new_state = copy.deepcopy(current_state)
-            #print("CHANGING INTERNAL STATE")
-            #print("FROM", new_state)
+
             #if moving onto another white then form a stack
             white_list=[(white[1], white[2]) for white in current_state[colour]]
-            #print("WHITE LIST:", white_list)
-            #print("COORD  :", coord)
-            #print("F_COORD:", f_coord)
             if f_coord in white_list:
-                #print("moving onto another white")
                 for white_member in new_state[colour]:
                     if tuple(white_member[1:3]) == coord:
+
                         #if moving all of the stack at once then remove current stack
                         if white_member[0] == number:
                             new_state[colour].remove(white_member)
                             break
+
                         #if moving part of the stack then remove a number from the stack
                         if white_member[0] > number:
                             white_member[0] -= number
@@ -69,19 +68,20 @@ class Action:
                         white_member[0] += number
                         return new_state
             else:
-                #print("not moving onto another white")
+
                 #if not moving onto any other white
                 for white_member in new_state[colour]:
                     if tuple(white_member[1:3]) == coord:
+
                         #if moving all of the stack at once then just change the coord
                         if number == white_member[0]:
                             white_member[1] = f_coord[0]
                             white_member[2] = f_coord[1]
+
                         #if moving a part of the stack then add another stack to the destination
                         if number < white_member[0]:
                             white_member[0] -= number
                             new_state[colour] += [[number] + list(f_coord)]
-                #print("TO  ", new_state)
                 return new_state
             return new_state
 

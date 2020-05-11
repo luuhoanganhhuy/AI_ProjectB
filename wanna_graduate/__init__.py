@@ -5,4 +5,4 @@
 # example import below, you can define it in another file and import
 # it into this module with the name 'Player':
 
-from tien_final.player import ExamplePlayer as Player
+from wanna_graduate.player import ExamplePlayer as Player
