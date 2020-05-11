@@ -226,9 +226,9 @@ def get_stack_num(team):
     count = 0
     for member in team:
         if member[0] >= 2:
-            count += member[0]-1
-    if count > 7:
-        count = count/2
+            count += 2*(member[0]-1)
+    #if count > 7:
+    #    count = count/2
     return count
 
 def evaluation(state, colour, phase):
@@ -240,10 +240,10 @@ def evaluation(state, colour, phase):
     difference = count_members(state["white"]) - count_members(state["black"])
     factor = 1 if colour == "white" else -1
     if phase == 1:
-        return 5*difference - 2*factor*heuristic(state, colour) + 4*factor*get_stack_num(state[colour])
+        return 7*difference - 2*factor*heuristic(state, colour) + 3*factor*get_stack_num(state[colour])
 
     if phase == 2:
-        return 9*difference - 3*factor*heuristic(state, colour) + 2*factor*get_stack_num(state[colour])
+        return 9*difference - 3*factor*heuristic(state, colour) + factor*get_stack_num(state[colour])
 
     else:
         if colour == "white":
