@@ -1,7 +1,8 @@
-from your_team_name.action import Action
+
+from random_bot.action import Action
 import random
 
-MAX_DEPTH = 1
+MAX_DEPTH = 4
 MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -11,6 +12,7 @@ class ExamplePlayer:
         your player. You should use this opportunity to set up your own internal
         representation of the game state, and any other information about the
         game state you would like to maintain for the duration of the game.
+
         The parameter colour will be a string representing the player your
         program will play as (White or Black). The value will be one of the
         strings "white" or "black" correspondingly.
@@ -23,62 +25,36 @@ class ExamplePlayer:
         #self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
         #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
-        self.prev_action = None
-        self.max_depth = 1
 
     def action(self):
         """
         This method is called at the beginning of each of your turns to request
         a choice of action from your program.
+
         Based on the current state of the game, your player should select and
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
-        start_time = time.process_time()
-        if count_members(self.state["white"]) <= 8:
-            self.max_depth = 2
-        if count_members(self.state["white"]) <= 4:
-            self.max_depth = 3
-
-        if self.clock > 50:
-            MAX_DEPTH = 1
         all_actions = all_possible_actions(self.state, self.colour)
-        for action in all_actions:
-            if action == self.prev_action:
-                all_actions.remove(action)
-                break
 
-        #random.shuffle(all_actions)
-        #for a in all_actions:
-        #    print(a.return_action())
         best_action = None
         if self.colour == "white": #white maximizer
             best_eval = -1000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, 0, "black", -1000, 1000)
-                #eval_child = minimax(action, self.state, 0, "black")
-                #print(eval_child, " ", action_child.return_action())
+                eval_child = minimax(action, self.state, 0, "black")
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action
-            print("\n------BEST EVAL:", best_eval)
-            self.prev_action = best_action
-            #return best_action.return_action()
+            return best_action.return_action()
         else:
             best_eval = 1000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, 0, "white", -1000, 1000)
-                #eval_child = minimax(action, self.state, 0, "white")
-                #print(eval_child, " ", action_child.return_action())
+                eval_child = minimax(action, self.state, 0, "white")
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action
-            self.prev_action = best_action
-            print("\n------BEST EVAL:", best_eval)
-        elapsed_time = time.process_time() - start_time
-        self.clock += elapsed_time
-        return best_action.return_action()
+            return best_action.return_action()
 
 
 
@@ -88,18 +64,21 @@ class ExamplePlayer:
         turns) to inform your player about the most recent action. You should
         use this opportunity to maintain your internal representation of the
         game state and any other information about the game you are storing.
+
         The parameter colour will be a string representing the player whose turn
         it is (White or Black). The value will be one of the strings "white" or
         "black" correspondingly.
+
         The parameter action is a representation of the most recent action
         conforming to the spec's instructions for representing actions.
+
         You may assume that action will always correspond to an allowed action
         for the player colour (your method does not need to validate the action
         against the game rules).
         """
         # TODO: Update state representation in response to action.
-        #self.colour = colour
         action_object = Action.from_tuple(action, colour)
+
         self.state = action_object.apply_to(self.state)
         return self.state
 
@@ -187,34 +166,13 @@ def find_explosion_groups(targets):
     return {frozenset(group) for group in groups.values()}
 #def heuristic()
 
-def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase):
-    state = action.apply_to(state)
-    if current_depth == max_depth or winner(state) != "none":
-        return evaluation(state, turn, phase)
-
-    all_actions = all_possible_actions(state, turn)
-    #random.shuffle(all_actions)
-    if turn == "white":
-        for action in all_actions:
-            alpha = max(alpha, alphabeta(action, state, max_depth, current_depth+1, "black", alpha, beta, phase))
-            if alpha >= beta:
-                break
-        return alpha
-
-    else:
-        for action in all_actions:
-            beta = min(beta, alphabeta(action, state, max_depth, current_depth+1, "white", alpha, beta, phase))
-            if alpha >= beta:
-                break
-        return beta
-
 def minimax(action, state, current_depth, turn):
     #best_action = None
     state = action.apply_to(state)
     if current_depth == MAX_DEPTH or winner(state) != "none":
         return evaluation(state, turn)
     all_actions = all_possible_actions(state, turn)
-    random.shuffle(all_actions)
+    #random.shuffle(all_actions)
     if turn == "white": #white maximizer
         best_eval = -1000
         for possible_action in all_actions:
@@ -235,7 +193,6 @@ def minimax(action, state, current_depth, turn):
                 best_eval = eval_child
                 #best_action = action
         return best_eval
-        #return (best_eval, best_action)
 
 def winner(state):
     if len(state["black"]) == 0 and len(state["white"]) == 0:
@@ -258,8 +215,7 @@ def evaluation(state, colour):
         return 100
     if winner(state) == "black":
         return -100
-    result = 10*(count_members(state["white"]) - count_members(state["black"]))
-    #if count_members(state["white"])
+    result = 2*(count_members(state["white"]) - count_members(state["black"]))
     #for member in state["white"]:
     #    if member[0] > 2:
     #        result = result - 5
@@ -267,22 +223,19 @@ def evaluation(state, colour):
     return result - factor*heuristic(state, colour)
 
 def all_possible_actions(state, colour):
-    move_directions = MOVE_DIRECTIONS
-    if colour == "black":
-        move_directions = [(0,-1), (+1,0), (-1,0), (0,+1)]
     all_actions = []
     all_directions = []
     all_move_actions = []
-    #factor = 1 if colour == "white" else -1
+    factor = 1 if colour == "white" else -1
     for member in state[colour]:
         coord = tuple(member[1:3])
         boom_action = Action("BOOM", None, coord, None, colour)
-        #if evaluation(boom_action.apply_to(state), colour)*factor > 0:
-        all_actions.append(boom_action)
+        if evaluation(boom_action.apply_to(state), turn)*factor > 0:
+            all_actions.append(boom_action)
 
         for n in range(1, 2):
             for step in range(1, member[0]+1):
-                for direction in move_directions:
+                for direction in MOVE_DIRECTIONS:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid(state):
                         all_move_actions.append(move_action)

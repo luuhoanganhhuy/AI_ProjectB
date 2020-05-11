@@ -1,7 +1,6 @@
-from your_team_name.action import Action
-import random
+from wanna_graduate.action import Action
+import time
 
-MAX_DEPTH = 1
 MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
 
 class ExamplePlayer:
@@ -20,11 +19,10 @@ class ExamplePlayer:
                                 [1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
                       "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
                                 [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
-        #self.state = {"black": [[1,0,6], [1,1,6], [1,3,6], [1,4,6], [1,6,6], [1,7,6]],
-        #              "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1]]}
         self.colour = colour
-        self.prev_action = None
         self.max_depth = 1
+        self.phase = 1
+        self.clock = 0
 
     def action(self):
         """
@@ -34,48 +32,44 @@ class ExamplePlayer:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
-        # TODO: Decide what action to take, and return it
         start_time = time.process_time()
-        if count_members(self.state["white"]) <= 8:
-            self.max_depth = 2
-        if count_members(self.state["white"]) <= 4:
+        # TODO: Decide what action to take, and return it
+
+        # set up phases according to the number of tokens remaining
+        if count_members(self.state[self.colour]) < 12:
+            self.phase = 2
+        if count_members(self.state[self.colour]) < 6:
+            self.phase = 3
+
+        # set up depth for each phases
+        if count_members(self.state[self.colour]) < 6:
+            self.max_depth =  2
+        if count_members(self.state[self.colour]) < 3:
             self.max_depth = 3
 
-        if self.clock > 50:
-            MAX_DEPTH = 1
-        all_actions = all_possible_actions(self.state, self.colour)
-        for action in all_actions:
-            if action == self.prev_action:
-                all_actions.remove(action)
-                break
 
-        #random.shuffle(all_actions)
-        #for a in all_actions:
-        #    print(a.return_action())
+        # change depth to the lowest when the time run out
+        if self.clock > 50:
+            self.max_depth = 1
+
+        all_actions = all_possible_actions(self.state, self.colour)
         best_action = None
+
         if self.colour == "white": #white maximizer
-            best_eval = -1000
+            best_eval = -10000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, 0, "black", -1000, 1000)
-                #eval_child = minimax(action, self.state, 0, "black")
-                #print(eval_child, " ", action_child.return_action())
+                eval_child = alphabeta(action, self.state, self.max_depth, 0, "black", -1000, 1000, self.phase)
                 if eval_child > best_eval:
                     best_eval = eval_child
                     best_action = action
-            print("\n------BEST EVAL:", best_eval)
-            self.prev_action = best_action
-            #return best_action.return_action()
         else:
-            best_eval = 1000
+            best_eval = 10000
             for action in all_actions:
-                eval_child = alphabeta(action, self.state, 0, "white", -1000, 1000)
-                #eval_child = minimax(action, self.state, 0, "white")
-                #print(eval_child, " ", action_child.return_action())
+                eval_child = alphabeta(action, self.state, self.max_depth, 0, "white", -1000, 1000, self.phase)
                 if eval_child < best_eval:
                     best_eval = eval_child
                     best_action = action
-            self.prev_action = best_action
-            print("\n------BEST EVAL:", best_eval)
+
         elapsed_time = time.process_time() - start_time
         self.clock += elapsed_time
         return best_action.return_action()
@@ -98,7 +92,6 @@ class ExamplePlayer:
         against the game rules).
         """
         # TODO: Update state representation in response to action.
-        #self.colour = colour
         action_object = Action.from_tuple(action, colour)
         self.state = action_object.apply_to(self.state)
         return self.state
@@ -115,6 +108,7 @@ def heuristic(state, colour):
 
 def distance_grid(group):
     """
+    Contributed to Project Part A Sample Solution COMP30024
     Precompute a Manhattan distance landscape for a particular group of
     squares---a dictionary of #steps until within explosive zone.
     """
@@ -126,6 +120,7 @@ def distance_grid(group):
 
 def manhattan_distance(xy_a, xy_b):
     """
+    Contributed to Project Part A Sample Solution COMP30024
     Number of steps between two squares allowing only
     up, down, left and right steps.
     """
@@ -139,6 +134,7 @@ BOOM_RADIUS = [(-1,+1), (+0,+1), (+1,+1),
                (-1,-1), (+0,-1), (+1,-1)]
 def around_square(xy):
     """
+    Contributed to Project Part A Sample Solution COMP30024
     Generate the list of squares surrounding a square
     (those affected by a boom action).
     """
@@ -149,11 +145,15 @@ def around_square(xy):
             yield square
 
 def around_group(group):
-    """The set of squares in explosive range of a set of squares."""
+    """
+    Contributed to Project Part A Sample Solution COMP30024
+    The set of squares in explosive range of a set of squares.
+    """
     return set.union(set(group), *[around_square(sq) for sq in group])
 
 def find_explosion_groups(targets):
     """
+    Contributed to Project Part A Sample Solution COMP30024
     Partition a set of targets into groups that will 'boom' together.
     'targets' is a set of coordinate pairs. Return a set of frozensets
     representing the partition.
@@ -185,7 +185,6 @@ def find_explosion_groups(targets):
             groups[top] = {t}
     # return the partition
     return {frozenset(group) for group in groups.values()}
-#def heuristic()
 
 def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase):
     state = action.apply_to(state)
@@ -193,7 +192,7 @@ def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase)
         return evaluation(state, turn, phase)
 
     all_actions = all_possible_actions(state, turn)
-    #random.shuffle(all_actions)
+
     if turn == "white":
         for action in all_actions:
             alpha = max(alpha, alphabeta(action, state, max_depth, current_depth+1, "black", alpha, beta, phase))
@@ -207,35 +206,6 @@ def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase)
             if alpha >= beta:
                 break
         return beta
-
-def minimax(action, state, current_depth, turn):
-    #best_action = None
-    state = action.apply_to(state)
-    if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state, turn)
-    all_actions = all_possible_actions(state, turn)
-    random.shuffle(all_actions)
-    if turn == "white": #white maximizer
-        best_eval = -1000
-        for possible_action in all_actions:
-            eval_child = minimax(possible_action, state, current_depth+1, "black")
-
-            if eval_child > best_eval:
-                best_eval = eval_child
-                #best_action = action
-        return best_eval
-        #return (best_eval, best_action)
-
-    else: #black minimizer
-        best_eval = 1000
-        for possible_action in all_actions:
-            eval_child = minimax(possible_action, state, current_depth+1, "white")
-
-            if eval_child < best_eval:
-                best_eval = eval_child
-                #best_action = action
-        return best_eval
-        #return (best_eval, best_action)
 
 def winner(state):
     if len(state["black"]) == 0 and len(state["white"]) == 0:
@@ -253,40 +223,65 @@ def count_members(team):
         count += member[0]
     return count
 
-def evaluation(state, colour):
+""" Get the total number of stack"""
+def get_stack_num(team):
+    count = 0
+    for member in team:
+        if member[0] >= 2:
+            count += member[0]-1
+    if count > 7:
+        count = count/2
+    return count
+
+def evaluation(state, colour, phase):
     if winner(state) == "white":
-        return 100
+        return 1000
     if winner(state) == "black":
-        return -100
-    result = 10*(count_members(state["white"]) - count_members(state["black"]))
-    #if count_members(state["white"])
-    #for member in state["white"]:
-    #    if member[0] > 2:
-    #        result = result - 5
+        return -1000
+    # count the difference between white and black tokens
+    difference = count_members(state["white"]) - count_members(state["black"])
     factor = 1 if colour == "white" else -1
-    return result - factor*heuristic(state, colour)
+
+    if phase == 1:
+        return 5*difference - 2*factor*heuristic(state, colour) + 3*factor*get_stack_num(state[colour])
+
+    if phase == 2:
+        return 9*difference - 3*factor*heuristic(state, colour) + 2*factor*get_stack_num(state[colour])
+
+    else:
+        if colour == "white":
+            if count_members(state["white"]) > count_members(state["black"]):
+                difference = difference + 12 - (count_members(state["black"]))
+                return difference - factor*heuristic(state, colour)
+            else:
+                return 2*difference - factor*heuristic(state, colour)
+
+        else:
+            if count_members(state["white"]) < count_members(state["black"]):
+                difference = difference - 12 + (count_members(state["white"]))
+                return difference - factor*heuristic(state, colour)
+            else:
+                return 2*difference - factor*heuristic(state, colour)
+
 
 def all_possible_actions(state, colour):
     move_directions = MOVE_DIRECTIONS
     if colour == "black":
         move_directions = [(0,-1), (+1,0), (-1,0), (0,+1)]
     all_actions = []
-    all_directions = []
     all_move_actions = []
-    #factor = 1 if colour == "white" else -1
+
     for member in state[colour]:
         coord = tuple(member[1:3])
         boom_action = Action("BOOM", None, coord, None, colour)
-        #if evaluation(boom_action.apply_to(state), colour)*factor > 0:
         all_actions.append(boom_action)
 
-        for n in range(1, 2):
+        for n in range(1, member[0]+1):
             for step in range(1, member[0]+1):
                 for direction in move_directions:
                     move_action = Action.move_from_attributes(n, coord, step, direction, colour)
                     if move_action.is_valid(state):
                         all_move_actions.append(move_action)
 
-    #random.shuffle(all_move_actions)
     all_actions.extend(all_move_actions)
     return all_actions
