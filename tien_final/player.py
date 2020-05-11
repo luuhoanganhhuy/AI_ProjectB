@@ -1,5 +1,6 @@
 from tien_final.action import Action
 import random
+import time
 
 MOVE_DIRECTIONS = [(0,+1), (+1,0),  (-1,0), (0,-1)]
 
@@ -20,9 +21,9 @@ class ExamplePlayer:
                       "white": [[1,0,1], [1,1,1], [1,3,1], [1,4,1], [1,6,1], [1,7,1],
                                 [1,0,0], [1,1,0], [1,3,0], [1,4,0], [1,6,0], [1,7,0]]}
         self.colour = colour
-        self.prev_action = None
         self.max_depth = 1
         self.phase = 1
+        self.clock = 0
 
     def action(self):
         """
@@ -32,7 +33,7 @@ class ExamplePlayer:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
-        print(self.state)
+        start_time = time.process_time()
         # TODO: Decide what action to take, and return it
         if count_members(self.state[self.colour]) < 6:
             self.max_depth =  2
@@ -43,6 +44,9 @@ class ExamplePlayer:
             self.phase = 2
         if count_members(self.state[self.colour]) < 6:
             self.phase = 3
+
+        if self.clock > 50:
+            self.max_depth = 1
         all_actions = all_possible_actions(self.state, self.colour)
         #for action in all_actions:
         #    if action == self.prev_action:
@@ -64,7 +68,7 @@ class ExamplePlayer:
                     best_action = action
             #print("\n------BEST EVAL:", best_eval)
             #self.prev_action = best_action
-            return best_action.return_action()
+            #return best_action.return_action()
         else:
             best_eval = 10000
             for action in all_actions:
@@ -76,7 +80,9 @@ class ExamplePlayer:
                     best_action = action
             #self.prev_action = best_action
             #print("\n------BEST EVAL:", best_eval)
-            return best_action.return_action()
+        elapsed_time = time.process_time() - start_time
+        self.clock += elapsed_time
+        return best_action.return_action()
 
 
 

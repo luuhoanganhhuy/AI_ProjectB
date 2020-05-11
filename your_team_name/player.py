@@ -35,10 +35,14 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
+        start_time = time.process_time()
         if count_members(self.state["white"]) <= 8:
-            MAX_DEPTH = 2
+            self.max_depth = 2
         if count_members(self.state["white"]) <= 4:
-            MAX_DEPTH = 3
+            self.max_depth = 3
+
+        if self.clock > 50:
+            MAX_DEPTH = 1
         all_actions = all_possible_actions(self.state, self.colour)
         for action in all_actions:
             if action == self.prev_action:
@@ -60,7 +64,7 @@ class ExamplePlayer:
                     best_action = action
             print("\n------BEST EVAL:", best_eval)
             self.prev_action = best_action
-            return best_action.return_action()
+            #return best_action.return_action()
         else:
             best_eval = 1000
             for action in all_actions:
@@ -72,7 +76,9 @@ class ExamplePlayer:
                     best_action = action
             self.prev_action = best_action
             print("\n------BEST EVAL:", best_eval)
-            return best_action.return_action()
+        elapsed_time = time.process_time() - start_time
+        self.clock += elapsed_time
+        return best_action.return_action()
 
 
 
@@ -181,23 +187,23 @@ def find_explosion_groups(targets):
     return {frozenset(group) for group in groups.values()}
 #def heuristic()
 
-def alphabeta(action, state, current_depth, turn, alpha, beta):
+def alphabeta(action, state, max_depth, current_depth, turn, alpha, beta, phase):
     state = action.apply_to(state)
-    if current_depth == MAX_DEPTH or winner(state) != "none":
-        return evaluation(state, turn)
+    if current_depth == max_depth or winner(state) != "none":
+        return evaluation(state, turn, phase)
 
     all_actions = all_possible_actions(state, turn)
     #random.shuffle(all_actions)
     if turn == "white":
         for action in all_actions:
-            alpha = max(alpha, alphabeta(action, state, current_depth+1, "black", alpha, beta))
+            alpha = max(alpha, alphabeta(action, state, max_depth, current_depth+1, "black", alpha, beta, phase))
             if alpha >= beta:
                 break
         return alpha
 
     else:
         for action in all_actions:
-            beta = min(beta, alphabeta(action, state, current_depth+1, "white", alpha, beta))
+            beta = min(beta, alphabeta(action, state, max_depth, current_depth+1, "white", alpha, beta, phase))
             if alpha >= beta:
                 break
         return beta
